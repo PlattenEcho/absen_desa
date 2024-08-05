@@ -148,24 +148,32 @@ class _HistoryPageState extends State<HistoryPage> {
                             final excel.Worksheet sheet =
                                 workbook.worksheets[0];
 
+                            excel.Style globalStyle =
+                                workbook.styles.add('style');
+                            globalStyle.fontName = 'Arial';
+                            globalStyle.fontSize = 12;
+
                             //Judul
                             sheet.getRangeByName('A2:AI2').merge();
                             sheet.getRangeByName('A2:AI2').setText(
                                 'BUKU ABSENSI / KEHADIRAN PERANGKAT DESA');
+                            sheet.getRangeByName("A2").cellStyle.fontSize = 12;
                             sheet.getRangeByName("A2").cellStyle.hAlign =
                                 excel.HAlignType.center;
 
                             //Bulan
                             sheet.getRangeByName('A4:C4').merge();
+                            sheet.getRangeByName("A4").cellStyle.fontSize = 12;
                             sheet
                                 .getRangeByName('A4')
-                                .setText('Bulan ------------');
+                                .setText('BULAN ------------');
 
                             //Tahun
                             sheet.getRangeByName('AH4:AI4').merge();
                             sheet
                                 .getRangeByName('AH4:AI4')
-                                .setText('Tahun -----');
+                                .setText('TAHUN -----');
+                            sheet.getRangeByName("AH4").cellStyle.fontSize = 12;
 
                             //Header - NO.
                             sheet.getRangeByName('A5:A6').merge();
@@ -174,6 +182,8 @@ class _HistoryPageState extends State<HistoryPage> {
                                 excel.HAlignType.center;
                             sheet.getRangeByName("A5:A6").cellStyle.vAlign =
                                 excel.VAlignType.center;
+                            sheet.getRangeByName("A5:A6").cellStyle.fontSize =
+                                12;
 
                             //Header - NAMA
                             sheet.getRangeByName('B5:B6').merge();
@@ -182,6 +192,8 @@ class _HistoryPageState extends State<HistoryPage> {
                                 excel.HAlignType.center;
                             sheet.getRangeByName("B5:B6").cellStyle.vAlign =
                                 excel.VAlignType.center;
+                            sheet.getRangeByName("B5:B6").cellStyle.fontSize =
+                                12;
 
                             //Header - JABATAN.
                             sheet.getRangeByName('C5:C6').merge();
@@ -190,6 +202,8 @@ class _HistoryPageState extends State<HistoryPage> {
                                 excel.HAlignType.center;
                             sheet.getRangeByName("C5:C6").cellStyle.vAlign =
                                 excel.VAlignType.center;
+                            sheet.getRangeByName("C5:C6").cellStyle.fontSize =
+                                12;
 
                             //Header - TANGGAL DAN KETERANGAN.
                             sheet.getRangeByName('D5:AH5').merge();
@@ -200,6 +214,8 @@ class _HistoryPageState extends State<HistoryPage> {
                                 excel.HAlignType.center;
                             sheet.getRangeByName("D5:AH5").cellStyle.vAlign =
                                 excel.VAlignType.center;
+                            sheet.getRangeByName("D5:AH5").cellStyle.fontSize =
+                                12;
 
                             //Header - Tanggal
                             for (int i = 0; i < 31; i++) {
@@ -216,6 +232,10 @@ class _HistoryPageState extends State<HistoryPage> {
                                   .getRangeByName("${column}6")
                                   .cellStyle
                                   .vAlign = excel.VAlignType.center;
+                              sheet
+                                  .getRangeByName("${column}6")
+                                  .cellStyle
+                                  .fontSize = 12;
                             }
 
                             //Header - KETERANGAN.
@@ -227,10 +247,83 @@ class _HistoryPageState extends State<HistoryPage> {
                                 excel.HAlignType.center;
                             sheet.getRangeByName("AI5:AI6").cellStyle.vAlign =
                                 excel.VAlignType.center;
+                            sheet.getRangeByName("AI5:AI6").cellStyle.fontSize =
+                                12;
 
-                            final excel.Range range1 =
-                                sheet.getRangeByName('B1');
-                            range1.setText('This is long text');
+                            // Border
+                            for (int row = 5; row <= 22; row++) {
+                              for (int col = 1; col <= 35; col++) {
+                                sheet
+                                    .getRangeByIndex(row, col)
+                                    .cellStyle
+                                    .borders
+                                    .all
+                                    .lineStyle = excel.LineStyle.thin;
+                              }
+                            }
+
+                            // Mengetahui Kepala Desa Gunungbatu
+                            sheet.getRangeByName('A24:C24').merge();
+                            sheet.getRangeByName("A24").cellStyle.fontSize = 12;
+                            sheet.getRangeByName('A24').setText('MENGETAHUI');
+                            sheet.getRangeByName("A24:C24").cellStyle.hAlign =
+                                excel.HAlignType.center;
+                            sheet.getRangeByName('A25:C25').merge();
+                            sheet.getRangeByName("A25:C25").cellStyle.fontSize =
+                                12;
+                            sheet
+                                .getRangeByName('A25:C25')
+                                .setText('KEPALA DESA GUNUNGBATU');
+                            sheet.getRangeByName("A25:C25").cellStyle.hAlign =
+                                excel.HAlignType.center;
+                            sheet.getRangeByName('A25:C25').merge();
+                            sheet.getRangeByName("A25:C25").cellStyle.fontSize =
+                                12;
+                            sheet.getRangeByName('A30:C30').merge();
+                            sheet.getRangeByName("A30:C30").cellStyle.fontSize =
+                                12;
+                            sheet
+                                .getRangeByName('A30:C30')
+                                .setText('.....................');
+                            sheet.getRangeByName("A30:C30").cellStyle.hAlign =
+                                excel.HAlignType.center;
+
+                            // Sekretaris Desa
+                            sheet.getRangeByName('X24:AH24').merge();
+                            sheet
+                                .getRangeByName("X24:AH24")
+                                .cellStyle
+                                .fontSize = 12;
+                            sheet
+                                .getRangeByName('X24:AH24')
+                                .setText('Gunungbatu, 05 Agustus 2024');
+                            sheet.getRangeByName("X24:AH24").cellStyle.hAlign =
+                                excel.HAlignType.center;
+                            sheet.getRangeByName('X25:AH25').merge();
+                            sheet
+                                .getRangeByName("X25:AH25")
+                                .cellStyle
+                                .fontSize = 12;
+                            sheet
+                                .getRangeByName('X25:AH25')
+                                .setText('SEKRETARIS DESA GUNUNGBATU');
+                            sheet.getRangeByName("X25:AH25").cellStyle.hAlign =
+                                excel.HAlignType.center;
+                            sheet.getRangeByName('X25:AH25').merge();
+                            sheet
+                                .getRangeByName("X25:AH25")
+                                .cellStyle
+                                .fontSize = 12;
+                            sheet.getRangeByName('X30:AH30').merge();
+                            sheet
+                                .getRangeByName("X30:AH30")
+                                .cellStyle
+                                .fontSize = 12;
+                            sheet
+                                .getRangeByName('X30:AH30')
+                                .setText('.....................');
+                            sheet.getRangeByName("X30:AH30").cellStyle.hAlign =
+                                excel.HAlignType.center;
 
                             sheet.autoFitRow(1);
 
