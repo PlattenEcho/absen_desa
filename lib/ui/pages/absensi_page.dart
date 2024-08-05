@@ -196,9 +196,9 @@ class _AbsensiPageState extends State<AbsensiPage>
                       final startTime =
                           DateTime(now.year, now.month, now.day, 8);
                       final endTime =
-                          DateTime(now.year, now.month, now.day, 14);
+                          DateTime(now.year, now.month, now.day, 15);
 
-                      if ((now.isAfter(startTime) && now.isBefore(endTime))) {
+                      if (!(now.isAfter(startTime) && now.isBefore(endTime))) {
                         Navigator.pop(context);
                         showToast(context, "Belum memasuki jam kerja");
                       } else {

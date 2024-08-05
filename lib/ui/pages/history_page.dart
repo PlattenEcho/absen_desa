@@ -38,6 +38,21 @@ class _HistoryPageState extends State<HistoryPage> {
     'Kepala Dusun 4',
   ];
 
+  final Map<String, String> monthNames = {
+    'January': 'Januari',
+    'February': 'Februari',
+    'March': 'Maret',
+    'April': 'April',
+    'May': 'Mei',
+    'June': 'Juni',
+    'July': 'Juli',
+    'August': 'Agustus',
+    'September': 'September',
+    'October': 'Oktober',
+    'November': 'November',
+    'December': 'Desember',
+  };
+
   @override
   void initState() {
     super.initState();
@@ -102,6 +117,26 @@ class _HistoryPageState extends State<HistoryPage> {
     }
   }
 
+  void _fetchAllHistory() {
+    if (selectedMonth != null) {
+      DateTime now = DateTime.now();
+      int selectedMonthIndex = months.indexOf(selectedMonth!) + 1;
+      DateTime startDate = DateTime(now.year, selectedMonthIndex, 1);
+      DateTime endDate =
+          DateTime(now.year, selectedMonthIndex + 1, 0, 23, 59, 59);
+
+      setState(() {
+        future = supabase
+            .from('absensi')
+            .select(
+                'id, created_at, tipe_absen, status_absensi, keterangan, id_user')
+            .gte('created_at', startDate.toIso8601String())
+            .lte('created_at', endDate.toIso8601String())
+            .order('created_at', ascending: false);
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
@@ -143,6 +178,17 @@ class _HistoryPageState extends State<HistoryPage> {
                         const SizedBox(width: 16),
                         ElevatedButton(
                           onPressed: () async {
+                            final users = await supabase
+                                .from('users')
+                                .select('id, username, nama_lengkap, jabatan')
+                                .order('jabatan', ascending: true);
+
+                            users.sort((a, b) {
+                              int indexA = positionsOrder.indexOf(a['jabatan']);
+                              int indexB = positionsOrder.indexOf(b['jabatan']);
+                              return indexA.compareTo(indexB);
+                            });
+
                             final excel.Workbook workbook =
                                 new excel.Workbook();
                             final excel.Worksheet sheet =
@@ -164,15 +210,26 @@ class _HistoryPageState extends State<HistoryPage> {
                             //Bulan
                             sheet.getRangeByName('A4:C4').merge();
                             sheet.getRangeByName("A4").cellStyle.fontSize = 12;
-                            sheet
-                                .getRangeByName('A4')
-                                .setText('BULAN ------------');
+
+                            List<String> parts = selectedMonth!.split(' ');
+                            if (parts.length == 2) {
+                              String month = parts[0];
+                              DateTime tempDate =
+                                  DateFormat('MMMM', 'en_US').parse(month);
+                              String monthInIndonesian =
+                                  DateFormat('MMMM', 'id_ID')
+                                      .format(tempDate)
+                                      .toUpperCase();
+                              sheet
+                                  .getRangeByName('A4')
+                                  .setText('BULAN $monthInIndonesian');
+                            }
 
                             //Tahun
                             sheet.getRangeByName('AH4:AI4').merge();
                             sheet
-                                .getRangeByName('AH4:AI4')
-                                .setText('TAHUN -----');
+                                .getRangeByName('AH4')
+                                .setText('TAHUN ${DateTime.now().year}');
                             sheet.getRangeByName("AH4").cellStyle.fontSize = 12;
 
                             //Header - NO.
@@ -282,9 +339,8 @@ class _HistoryPageState extends State<HistoryPage> {
                             sheet.getRangeByName('A30:C30').merge();
                             sheet.getRangeByName("A30:C30").cellStyle.fontSize =
                                 12;
-                            sheet
-                                .getRangeByName('A30:C30')
-                                .setText('.....................');
+                            sheet.getRangeByName('A30:C30').setText(
+                                '...............................................');
                             sheet.getRangeByName("A30:C30").cellStyle.hAlign =
                                 excel.HAlignType.center;
 
@@ -294,9 +350,12 @@ class _HistoryPageState extends State<HistoryPage> {
                                 .getRangeByName("X24:AH24")
                                 .cellStyle
                                 .fontSize = 12;
+                            String today = DateFormat('d MMMM yyyy', 'id_ID')
+                                .format(DateTime.now())
+                                .toUpperCase();
                             sheet
                                 .getRangeByName('X24:AH24')
-                                .setText('Gunungbatu, 05 Agustus 2024');
+                                .setText('GUNUNGBATU, $today');
                             sheet.getRangeByName("X24:AH24").cellStyle.hAlign =
                                 excel.HAlignType.center;
                             sheet.getRangeByName('X25:AH25').merge();
@@ -319,15 +378,81 @@ class _HistoryPageState extends State<HistoryPage> {
                                 .getRangeByName("X30:AH30")
                                 .cellStyle
                                 .fontSize = 12;
-                            sheet
-                                .getRangeByName('X30:AH30')
-                                .setText('.....................');
+                            sheet.getRangeByName('X30:AH30').setText(
+                                '...............................................');
                             sheet.getRangeByName("X30:AH30").cellStyle.hAlign =
                                 excel.HAlignType.center;
 
-                            sheet.autoFitRow(1);
+                            if (parts.length == 2) {
+                              String monthEnglish = parts[0];
+                              String year = parts[1];
 
-                            sheet.autoFitColumn(2);
+                              // Konversi nama bulan dari bahasa Inggris ke bahasa Indonesia
+                              String month = monthNames[monthEnglish]!;
+
+                              // Konversi nama bulan ke index bulan
+                              DateTime tempDate =
+                                  DateFormat('MMMM', 'id_ID').parse(month);
+                              int monthIndex = tempDate.month;
+
+                              // Mengisi Data Absensi
+                              int row = 7;
+                              for (var user in users) {
+                                sheet
+                                    .getRangeByIndex(row, 1)
+                                    .setText((row - 6).toString());
+                                sheet
+                                    .getRangeByIndex(row, 2)
+                                    .setText(user['nama_lengkap']);
+                                sheet
+                                    .getRangeByIndex(row, 3)
+                                    .setText(user['jabatan']);
+
+                                final absensiUser = await supabase
+                                    .from('absensi')
+                                    .select()
+                                    .eq('id_user', user['id'])
+                                    .gte(
+                                        'created_at',
+                                        DateTime(int.parse(year), monthIndex, 1)
+                                            .toIso8601String())
+                                    .lte(
+                                        'created_at',
+                                        DateTime(int.parse(year),
+                                                monthIndex + 1, 0, 23, 59, 59)
+                                            .toIso8601String());
+
+                                for (var absensi in absensiUser) {
+                                  DateTime date =
+                                      DateTime.parse(absensi['created_at']);
+                                  int columnIndex = date.day + 3;
+                                  String columnName =
+                                      getExcelColumnName(columnIndex);
+                                  int tipeAbsen = absensi['tipe_absen'];
+
+                                  var cell =
+                                      sheet.getRangeByName("$columnName$row");
+
+                                  if (tipeAbsen == 1) {
+                                    cell.cellStyle.backColorRgb =
+                                        Color.fromARGB(255, 0, 255, 0); // Hijau
+                                  } else if (tipeAbsen == 2) {
+                                    cell.cellStyle.backColorRgb =
+                                        Color.fromARGB(
+                                            255, 255, 255, 0); // Kuning
+                                  } else {
+                                    cell.cellStyle.backColorRgb =
+                                        Color.fromARGB(255, 255, 0, 0); // Merah
+                                  }
+                                }
+                                row++;
+                              }
+                            }
+
+                            // Auto-fit the columns
+                            for (int col = 1; col <= 34; col++) {
+                              sheet.autoFitColumn(col);
+                            }
 
                             final List<int> bytes = workbook.saveAsStream();
                             File('/storage/emulated/0/Download/excel.xlsx')
