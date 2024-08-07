@@ -20,7 +20,7 @@ class AbsensiPage extends StatefulWidget {
 class _AbsensiPageState extends State<AbsensiPage>
     with AutomaticKeepAliveClientMixin {
   bool isInOffice = false;
-  Timer? _timer;
+  StreamSubscription<Position>? _positionStreamSubscription;
   final TextEditingController keteranganController = TextEditingController();
   final FocusNode keteranganFocusNode = FocusNode();
   Pengguna? user;
@@ -42,19 +42,7 @@ class _AbsensiPageState extends State<AbsensiPage>
     }
   }
 
-  Future<void> checkIsInOffice() async {
-    LocationPermission permission = await Geolocator.requestPermission();
-
-    if (permission == LocationPermission.denied ||
-        permission == LocationPermission.deniedForever) {
-      setState(() {
-        isLoading = false;
-      });
-      return;
-    }
-
-    Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high);
+  Future<void> checkIsInOffice(Position position) async {
     double officeLat = -7.083531362412237;
     double officeLong = 109.46181639697896;
     double distance = Geolocator.distanceBetween(
@@ -69,19 +57,36 @@ class _AbsensiPageState extends State<AbsensiPage>
     }
   }
 
+  void startLocationStream() {
+    _positionStreamSubscription = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 10, // Minimal perubahan jarak untuk memicu update
+      ),
+    ).listen((Position position) {
+      checkIsInOffice(position);
+    });
+  }
+
   @override
   void initState() {
     super.initState();
     loadUser();
-    checkIsInOffice();
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      checkIsInOffice();
+    Geolocator.requestPermission().then((permission) {
+      if (permission != LocationPermission.denied &&
+          permission != LocationPermission.deniedForever) {
+        startLocationStream();
+      } else {
+        setState(() {
+          isLoading = false;
+        });
+      }
     });
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _positionStreamSubscription?.cancel();
     keteranganFocusNode.dispose();
     super.dispose();
   }
