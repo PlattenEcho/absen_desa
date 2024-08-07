@@ -28,6 +28,8 @@ class _AbsensiPageState extends State<AbsensiPage>
 
   int tipeAbsensi = 0;
 
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   void loadUser() {
     StorageController storageController = Get.find<StorageController>();
     final userData = storageController.getData('user');
@@ -83,174 +85,148 @@ class _AbsensiPageState extends State<AbsensiPage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return RefreshIndicator(
-      onRefresh: checkIsInOffice,
-      child: Container(
-        alignment: Alignment.center,
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-        child: ListView(
-          children: [
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  "Lokasi Saat ini:",
-                  textAlign: TextAlign.center,
-                  style: blackTextStyle.copyWith(fontSize: 16),
-                ),
-                Text(
-                  isInOffice ? "Di Dalam Kantor" : "Di Luar Kantor",
-                  textAlign: TextAlign.center,
-                  style: blackTextStyle.copyWith(
-                      color: isInOffice ? kGreenColor : kRedColor,
-                      fontSize: 20,
-                      fontWeight: extraBold),
-                ),
-                gapH(16),
-                Text(
-                  "Tipe Absen:",
-                  textAlign: TextAlign.center,
-                  style: blackTextStyle.copyWith(fontSize: 16),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Row(
-                      children: [
-                        Radio<int>(
-                          value: 0,
-                          groupValue: tipeAbsensi,
-                          onChanged: (value) {
-                            setState(() {
-                              tipeAbsensi = value!;
-                            });
-                          },
-                        ),
-                        Text('Berangkat',
-                            style: blackTextStyle.copyWith(
-                                fontSize: 16, fontWeight: bold)),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        Radio<int>(
-                          value: 1,
-                          groupValue: tipeAbsensi,
-                          onChanged: (value) {
-                            setState(() {
-                              tipeAbsensi = value!;
-                            });
-                          },
-                        ),
-                        Text('Pulang',
-                            style: blackTextStyle.copyWith(
-                                fontSize: 16, fontWeight: bold)),
-                      ],
-                    ),
-                  ],
-                ),
-                gapH(16),
-                Text(
-                  "Keterangan:",
-                  textAlign: TextAlign.center,
-                  style: blackTextStyle.copyWith(fontSize: 16),
-                ),
-                gapH8,
-                TextField(
-                  controller: keteranganController,
-                  keyboardType: TextInputType.multiline,
-                  maxLines: 4,
-                  decoration: const InputDecoration(
-                      hintText: "Isi Keterangan (Opsional)",
-                      focusedBorder: OutlineInputBorder(
-                          borderSide:
-                              BorderSide(width: 1, color: Colors.black)),
-                      border: OutlineInputBorder(
-                          borderSide:
-                              BorderSide(width: 1, color: Colors.black))),
-                ),
-                gapH24,
-                Button(
-                    text: "Absen Sekarang",
-                    textColor: kWhiteColor,
-                    startColor: kPrimaryColor,
-                    endColor: kPrimaryColor,
-                    onPressed: () async {
-                      showDialog(
-                        context: context,
-                        barrierDismissible: false,
-                        builder: (context) => Center(
-                          child: CircularProgressIndicator(
-                            color: kWhiteColor,
-                          ),
-                        ),
-                      );
-
-                      final today = DateTime.now().toIso8601String();
-                      final now = DateTime.now();
-                      final todayStart = DateTime(now.year, now.month, now.day)
-                          .toIso8601String();
-                      final todayEnd =
-                          DateTime(now.year, now.month, now.day, 23, 59, 59)
-                              .toIso8601String();
-                      final startTime =
-                          DateTime(now.year, now.month, now.day, 8);
-                      final endTime =
-                          DateTime(now.year, now.month, now.day, 15);
-
-                      if (!(now.isAfter(startTime) && now.isBefore(endTime))) {
-                        Navigator.pop(context);
-                        showToast(context, "Belum memasuki jam kerja");
-                      } else {
-                        try {
-                          final berangkatResponse = await supabase
-                              .from('absensi')
-                              .select('id')
-                              .eq('username', user!.username)
-                              .gte('created_at', todayStart)
-                              .lte('created_at', todayEnd)
-                              .eq('tipe_absen', 0)
-                              .limit(1);
-
-                          if (tipeAbsensi == 0) {
-                            if (berangkatResponse.isEmpty) {
-                              await supabase.from('absensi').insert({
-                                'id_user': user!.id,
-                                'username': user!.username,
-                                'status_absensi': isInOffice ? 1 : 0,
-                                'latitude': userLat,
-                                'longitude': userLong,
-                                'tipe_absen': 0,
-                                'keterangan': keteranganController.text.trim(),
-                                'created_at': today
+    return Scaffold(
+      key: _scaffoldKey,
+      body: RefreshIndicator(
+        onRefresh: checkIsInOffice,
+        child: Container(
+          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+          child: ListView(
+            children: [
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "Lokasi Saat ini:",
+                    textAlign: TextAlign.center,
+                    style: blackTextStyle.copyWith(fontSize: 16),
+                  ),
+                  Text(
+                    isInOffice ? "Di Dalam Kantor" : "Di Luar Kantor",
+                    textAlign: TextAlign.center,
+                    style: blackTextStyle.copyWith(
+                        color: isInOffice ? kGreenColor : kRedColor,
+                        fontSize: 20,
+                        fontWeight: extraBold),
+                  ),
+                  gapH(16),
+                  Text(
+                    "Tipe Absen:",
+                    textAlign: TextAlign.center,
+                    style: blackTextStyle.copyWith(fontSize: 16),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Row(
+                        children: [
+                          Radio<int>(
+                            value: 0,
+                            groupValue: tipeAbsensi,
+                            onChanged: (value) {
+                              setState(() {
+                                tipeAbsensi = value!;
                               });
-                              Navigator.pop(context);
-                              showToast(context, "Absen berhasil.");
-                            } else {
-                              Navigator.pop(context);
-                              showToast(context,
-                                  "Anda sudah melakukan absen berangkat hari ini");
-                            }
-                          }
+                            },
+                          ),
+                          Text('Berangkat',
+                              style: blackTextStyle.copyWith(
+                                  fontSize: 16, fontWeight: bold)),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Radio<int>(
+                            value: 1,
+                            groupValue: tipeAbsensi,
+                            onChanged: (value) {
+                              setState(() {
+                                tipeAbsensi = value!;
+                              });
+                            },
+                          ),
+                          Text('Pulang',
+                              style: blackTextStyle.copyWith(
+                                  fontSize: 16, fontWeight: bold)),
+                        ],
+                      ),
+                    ],
+                  ),
+                  gapH(16),
+                  Text(
+                    "Keterangan:",
+                    textAlign: TextAlign.center,
+                    style: blackTextStyle.copyWith(fontSize: 16),
+                  ),
+                  gapH8,
+                  TextField(
+                    controller: keteranganController,
+                    keyboardType: TextInputType.multiline,
+                    maxLines: 4,
+                    decoration: const InputDecoration(
+                        hintText: "Isi Keterangan (Opsional)",
+                        focusedBorder: OutlineInputBorder(
+                            borderSide:
+                                BorderSide(width: 1, color: Colors.black)),
+                        border: OutlineInputBorder(
+                            borderSide:
+                                BorderSide(width: 1, color: Colors.black))),
+                  ),
+                  gapH24,
+                  Button(
+                      text: "Absen Sekarang",
+                      textColor: kWhiteColor,
+                      startColor: kPrimaryColor,
+                      endColor: kPrimaryColor,
+                      onPressed: () async {
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (context) => Center(
+                            child: CircularProgressIndicator(
+                              color: kWhiteColor,
+                            ),
+                          ),
+                        );
 
-                          if (tipeAbsensi == 1) {
-                            final pulangResponse = await supabase
+                        final today = DateTime.now().toIso8601String();
+                        final now = DateTime.now();
+                        final todayStart =
+                            DateTime(now.year, now.month, now.day)
+                                .toIso8601String();
+                        final todayEnd =
+                            DateTime(now.year, now.month, now.day, 23, 59, 59)
+                                .toIso8601String();
+                        final startTime =
+                            DateTime(now.year, now.month, now.day, 8);
+                        final endTime =
+                            DateTime(now.year, now.month, now.day, 14);
+
+                        if (!(now.isAfter(startTime) &&
+                            now.isBefore(endTime))) {
+                          Navigator.pop(context);
+                          showToast(context, "Belum memasuki jam kerja");
+                        } else {
+                          try {
+                            final berangkatResponse = await supabase
                                 .from('absensi')
                                 .select('id')
                                 .eq('username', user!.username)
                                 .gte('created_at', todayStart)
                                 .lte('created_at', todayEnd)
-                                .eq('tipe_absen', 1)
+                                .eq('tipe_absen', 0)
                                 .limit(1);
-                            if (berangkatResponse.isNotEmpty) {
-                              if (pulangResponse.isEmpty) {
+
+                            if (tipeAbsensi == 0) {
+                              if (berangkatResponse.isEmpty) {
                                 await supabase.from('absensi').insert({
                                   'id_user': user!.id,
                                   'username': user!.username,
                                   'status_absensi': isInOffice ? 1 : 0,
                                   'latitude': userLat,
                                   'longitude': userLong,
-                                  'tipe_absen': 1,
+                                  'tipe_absen': 0,
                                   'keterangan':
                                       keteranganController.text.trim(),
                                   'created_at': today
@@ -260,23 +236,55 @@ class _AbsensiPageState extends State<AbsensiPage>
                               } else {
                                 Navigator.pop(context);
                                 showToast(context,
-                                    "Anda sudah melakukan absen pulang hari ini");
+                                    "Anda sudah melakukan absen berangkat hari ini");
                               }
-                            } else {
-                              Navigator.pop(context);
-                              showToast(context,
-                                  "Anda belum melakukan absen berangkat hari ini");
                             }
+
+                            if (tipeAbsensi == 1) {
+                              final pulangResponse = await supabase
+                                  .from('absensi')
+                                  .select('id')
+                                  .eq('username', user!.username)
+                                  .gte('created_at', todayStart)
+                                  .lte('created_at', todayEnd)
+                                  .eq('tipe_absen', 1)
+                                  .limit(1);
+                              if (berangkatResponse.isNotEmpty) {
+                                if (pulangResponse.isEmpty) {
+                                  await supabase.from('absensi').insert({
+                                    'id_user': user!.id,
+                                    'username': user!.username,
+                                    'status_absensi': isInOffice ? 1 : 0,
+                                    'latitude': userLat,
+                                    'longitude': userLong,
+                                    'tipe_absen': 1,
+                                    'keterangan':
+                                        keteranganController.text.trim(),
+                                    'created_at': today
+                                  });
+                                  Navigator.pop(context);
+                                  showToast(context, "Absen berhasil.");
+                                } else {
+                                  Navigator.pop(context);
+                                  showToast(context,
+                                      "Anda sudah melakukan absen pulang hari ini");
+                                }
+                              } else {
+                                Navigator.pop(context);
+                                showToast(context,
+                                    "Anda belum melakukan absen berangkat hari ini");
+                              }
+                            }
+                          } catch (e) {
+                            Navigator.pop(context);
+                            showToast(context, e.toString());
                           }
-                        } catch (e) {
-                          Navigator.pop(context);
-                          showToast(context, e.toString());
                         }
-                      }
-                    }),
-              ],
-            ),
-          ],
+                      }),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -6,6 +6,7 @@ import 'package:absen_desa/model/pengguna.dart';
 import 'package:absen_desa/ui/shared/gaps.dart';
 import 'package:absen_desa/ui/shared/theme.dart';
 import 'package:absen_desa/ui/widgets/card.dart';
+import 'package:absen_desa/ui/widgets/toast.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -178,287 +179,348 @@ class _HistoryPageState extends State<HistoryPage> {
                         const SizedBox(width: 16),
                         ElevatedButton(
                           onPressed: () async {
-                            final users = await supabase
-                                .from('users')
-                                .select('id, username, nama_lengkap, jabatan')
-                                .order('jabatan', ascending: true);
+                            showDialog(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (context) => Center(
+                                child: CircularProgressIndicator(
+                                  color: kWhiteColor,
+                                ),
+                              ),
+                            );
 
-                            users.sort((a, b) {
-                              int indexA = positionsOrder.indexOf(a['jabatan']);
-                              int indexB = positionsOrder.indexOf(b['jabatan']);
-                              return indexA.compareTo(indexB);
-                            });
+                            try {
+                              final users = await supabase
+                                  .from('users')
+                                  .select('id, username, nama_lengkap, jabatan')
+                                  .order('jabatan', ascending: true);
 
-                            final excel.Workbook workbook =
-                                new excel.Workbook();
-                            final excel.Worksheet sheet =
-                                workbook.worksheets[0];
+                              users.sort((a, b) {
+                                int indexA =
+                                    positionsOrder.indexOf(a['jabatan']);
+                                int indexB =
+                                    positionsOrder.indexOf(b['jabatan']);
+                                return indexA.compareTo(indexB);
+                              });
 
-                            excel.Style globalStyle =
-                                workbook.styles.add('style');
-                            globalStyle.fontName = 'Arial';
-                            globalStyle.fontSize = 12;
+                              final excel.Workbook workbook =
+                                  new excel.Workbook();
+                              final excel.Worksheet sheet =
+                                  workbook.worksheets[0];
 
-                            //Judul
-                            sheet.getRangeByName('A2:AI2').merge();
-                            sheet.getRangeByName('A2:AI2').setText(
-                                'BUKU ABSENSI / KEHADIRAN PERANGKAT DESA');
-                            sheet.getRangeByName("A2").cellStyle.fontSize = 12;
-                            sheet.getRangeByName("A2").cellStyle.hAlign =
-                                excel.HAlignType.center;
+                              excel.Style globalStyle =
+                                  workbook.styles.add('style');
+                              globalStyle.fontName = 'Arial';
+                              globalStyle.fontSize = 12;
 
-                            //Bulan
-                            sheet.getRangeByName('A4:C4').merge();
-                            sheet.getRangeByName("A4").cellStyle.fontSize = 12;
+                              //Judul
+                              sheet.getRangeByName('A2:AI2').merge();
+                              sheet.getRangeByName('A2:AI2').setText(
+                                  'BUKU ABSENSI / KEHADIRAN PERANGKAT DESA');
+                              sheet.getRangeByName("A2").cellStyle.fontSize =
+                                  12;
+                              sheet.getRangeByName("A2").cellStyle.hAlign =
+                                  excel.HAlignType.center;
 
-                            List<String> parts = selectedMonth!.split(' ');
-                            if (parts.length == 2) {
-                              String month = parts[0];
-                              DateTime tempDate =
-                                  DateFormat('MMMM', 'en_US').parse(month);
-                              String monthInIndonesian =
-                                  DateFormat('MMMM', 'id_ID')
-                                      .format(tempDate)
-                                      .toUpperCase();
+                              //Bulan
+                              sheet.getRangeByName('A4:C4').merge();
+                              sheet.getRangeByName("A4").cellStyle.fontSize =
+                                  12;
+
+                              List<String> parts = selectedMonth!.split(' ');
+                              if (parts.length == 2) {
+                                String month = parts[0];
+                                DateTime tempDate =
+                                    DateFormat('MMMM', 'en_US').parse(month);
+                                String monthInIndonesian =
+                                    DateFormat('MMMM', 'id_ID')
+                                        .format(tempDate)
+                                        .toUpperCase();
+                                sheet
+                                    .getRangeByName('A4')
+                                    .setText('BULAN $monthInIndonesian');
+                              }
+
+                              //Tahun
+                              sheet.getRangeByName('AH4:AI4').merge();
                               sheet
-                                  .getRangeByName('A4')
-                                  .setText('BULAN $monthInIndonesian');
-                            }
+                                  .getRangeByName('AH4')
+                                  .setText('TAHUN ${DateTime.now().year}');
+                              sheet.getRangeByName("AH4").cellStyle.fontSize =
+                                  12;
 
-                            //Tahun
-                            sheet.getRangeByName('AH4:AI4').merge();
-                            sheet
-                                .getRangeByName('AH4')
-                                .setText('TAHUN ${DateTime.now().year}');
-                            sheet.getRangeByName("AH4").cellStyle.fontSize = 12;
+                              //Header - NO.
+                              sheet.getRangeByName('A5:A6').merge();
+                              sheet.getRangeByName('A5:A6').setText("NO.");
+                              sheet.getRangeByName("A5:A6").cellStyle.hAlign =
+                                  excel.HAlignType.center;
+                              sheet.getRangeByName("A5:A6").cellStyle.vAlign =
+                                  excel.VAlignType.center;
+                              sheet.getRangeByName("A5:A6").cellStyle.fontSize =
+                                  12;
 
-                            //Header - NO.
-                            sheet.getRangeByName('A5:A6').merge();
-                            sheet.getRangeByName('A5:A6').setText("NO.");
-                            sheet.getRangeByName("A5:A6").cellStyle.hAlign =
-                                excel.HAlignType.center;
-                            sheet.getRangeByName("A5:A6").cellStyle.vAlign =
-                                excel.VAlignType.center;
-                            sheet.getRangeByName("A5:A6").cellStyle.fontSize =
-                                12;
+                              //Header - NAMA
+                              sheet.getRangeByName('B5:B6').merge();
+                              sheet.getRangeByName('B5:B6').setText("NAMA");
+                              sheet.getRangeByName("B5:B6").cellStyle.hAlign =
+                                  excel.HAlignType.center;
+                              sheet.getRangeByName("B5:B6").cellStyle.vAlign =
+                                  excel.VAlignType.center;
+                              sheet.getRangeByName("B5:B6").cellStyle.fontSize =
+                                  12;
 
-                            //Header - NAMA
-                            sheet.getRangeByName('B5:B6').merge();
-                            sheet.getRangeByName('B5:B6').setText("NAMA");
-                            sheet.getRangeByName("B5:B6").cellStyle.hAlign =
-                                excel.HAlignType.center;
-                            sheet.getRangeByName("B5:B6").cellStyle.vAlign =
-                                excel.VAlignType.center;
-                            sheet.getRangeByName("B5:B6").cellStyle.fontSize =
-                                12;
+                              //Header - JABATAN.
+                              sheet.getRangeByName('C5:C6').merge();
+                              sheet.getRangeByName('C5:C6').setText("JABATAN");
+                              sheet.getRangeByName("C5:C6").cellStyle.hAlign =
+                                  excel.HAlignType.center;
+                              sheet.getRangeByName("C5:C6").cellStyle.vAlign =
+                                  excel.VAlignType.center;
+                              sheet.getRangeByName("C5:C6").cellStyle.fontSize =
+                                  12;
 
-                            //Header - JABATAN.
-                            sheet.getRangeByName('C5:C6').merge();
-                            sheet.getRangeByName('C5:C6').setText("JABATAN");
-                            sheet.getRangeByName("C5:C6").cellStyle.hAlign =
-                                excel.HAlignType.center;
-                            sheet.getRangeByName("C5:C6").cellStyle.vAlign =
-                                excel.VAlignType.center;
-                            sheet.getRangeByName("C5:C6").cellStyle.fontSize =
-                                12;
-
-                            //Header - TANGGAL DAN KETERANGAN.
-                            sheet.getRangeByName('D5:AH5').merge();
-                            sheet
-                                .getRangeByName('D5:AH5')
-                                .setText("TANGGAL DAN TANDA TANGAN");
-                            sheet.getRangeByName("D5:AH5").cellStyle.hAlign =
-                                excel.HAlignType.center;
-                            sheet.getRangeByName("D5:AH5").cellStyle.vAlign =
-                                excel.VAlignType.center;
-                            sheet.getRangeByName("D5:AH5").cellStyle.fontSize =
-                                12;
-
-                            //Header - Tanggal
-                            for (int i = 0; i < 31; i++) {
-                              final column = getExcelColumnName(
-                                  4 + i); // Kolom D adalah kolom ke-4
+                              //Header - TANGGAL DAN KETERANGAN.
+                              sheet.getRangeByName('D5:AH5').merge();
                               sheet
-                                  .getRangeByName("${column}6")
-                                  .setText((i + 1).toString());
+                                  .getRangeByName('D5:AH5')
+                                  .setText("TANGGAL DAN TANDA TANGAN");
+                              sheet.getRangeByName("D5:AH5").cellStyle.hAlign =
+                                  excel.HAlignType.center;
+                              sheet.getRangeByName("D5:AH5").cellStyle.vAlign =
+                                  excel.VAlignType.center;
                               sheet
-                                  .getRangeByName("${column}6")
-                                  .cellStyle
-                                  .hAlign = excel.HAlignType.center;
-                              sheet
-                                  .getRangeByName("${column}6")
-                                  .cellStyle
-                                  .vAlign = excel.VAlignType.center;
-                              sheet
-                                  .getRangeByName("${column}6")
+                                  .getRangeByName("D5:AH5")
                                   .cellStyle
                                   .fontSize = 12;
-                            }
 
-                            //Header - KETERANGAN.
-                            sheet.getRangeByName('AI5:AI6').merge();
-                            sheet
-                                .getRangeByName('AI5:AI6')
-                                .setText("KETERANGAN");
-                            sheet.getRangeByName("AI5:AI6").cellStyle.hAlign =
-                                excel.HAlignType.center;
-                            sheet.getRangeByName("AI5:AI6").cellStyle.vAlign =
-                                excel.VAlignType.center;
-                            sheet.getRangeByName("AI5:AI6").cellStyle.fontSize =
-                                12;
-
-                            // Border
-                            for (int row = 5; row <= 22; row++) {
-                              for (int col = 1; col <= 35; col++) {
+                              //Header - Tanggal
+                              for (int i = 0; i < 31; i++) {
+                                final column = getExcelColumnName(
+                                    4 + i); // Kolom D adalah kolom ke-4
                                 sheet
-                                    .getRangeByIndex(row, col)
+                                    .getRangeByName("${column}6")
+                                    .setText((i + 1).toString());
+                                sheet
+                                    .getRangeByName("${column}6")
                                     .cellStyle
-                                    .borders
-                                    .all
-                                    .lineStyle = excel.LineStyle.thin;
+                                    .hAlign = excel.HAlignType.center;
+                                sheet
+                                    .getRangeByName("${column}6")
+                                    .cellStyle
+                                    .vAlign = excel.VAlignType.center;
+                                sheet
+                                    .getRangeByName("${column}6")
+                                    .cellStyle
+                                    .fontSize = 12;
                               }
-                            }
 
-                            // Mengetahui Kepala Desa Gunungbatu
-                            sheet.getRangeByName('A24:C24').merge();
-                            sheet.getRangeByName("A24").cellStyle.fontSize = 12;
-                            sheet.getRangeByName('A24').setText('MENGETAHUI');
-                            sheet.getRangeByName("A24:C24").cellStyle.hAlign =
-                                excel.HAlignType.center;
-                            sheet.getRangeByName('A25:C25').merge();
-                            sheet.getRangeByName("A25:C25").cellStyle.fontSize =
-                                12;
-                            sheet
-                                .getRangeByName('A25:C25')
-                                .setText('KEPALA DESA GUNUNGBATU');
-                            sheet.getRangeByName("A25:C25").cellStyle.hAlign =
-                                excel.HAlignType.center;
-                            sheet.getRangeByName('A25:C25').merge();
-                            sheet.getRangeByName("A25:C25").cellStyle.fontSize =
-                                12;
-                            sheet.getRangeByName('A30:C30').merge();
-                            sheet.getRangeByName("A30:C30").cellStyle.fontSize =
-                                12;
-                            sheet.getRangeByName('A30:C30').setText(
-                                '...............................................');
-                            sheet.getRangeByName("A30:C30").cellStyle.hAlign =
-                                excel.HAlignType.center;
+                              //Header - KETERANGAN.
+                              sheet.getRangeByName('AI5:AI6').merge();
+                              sheet
+                                  .getRangeByName('AI5:AI6')
+                                  .setText("KETERANGAN");
+                              sheet.getRangeByName("AI5:AI6").cellStyle.hAlign =
+                                  excel.HAlignType.center;
+                              sheet.getRangeByName("AI5:AI6").cellStyle.vAlign =
+                                  excel.VAlignType.center;
+                              sheet
+                                  .getRangeByName("AI5:AI6")
+                                  .cellStyle
+                                  .fontSize = 12;
 
-                            // Sekretaris Desa
-                            sheet.getRangeByName('X24:AH24').merge();
-                            sheet
-                                .getRangeByName("X24:AH24")
-                                .cellStyle
-                                .fontSize = 12;
-                            String today = DateFormat('d MMMM yyyy', 'id_ID')
-                                .format(DateTime.now())
-                                .toUpperCase();
-                            sheet
-                                .getRangeByName('X24:AH24')
-                                .setText('GUNUNGBATU, $today');
-                            sheet.getRangeByName("X24:AH24").cellStyle.hAlign =
-                                excel.HAlignType.center;
-                            sheet.getRangeByName('X25:AH25').merge();
-                            sheet
-                                .getRangeByName("X25:AH25")
-                                .cellStyle
-                                .fontSize = 12;
-                            sheet
-                                .getRangeByName('X25:AH25')
-                                .setText('SEKRETARIS DESA GUNUNGBATU');
-                            sheet.getRangeByName("X25:AH25").cellStyle.hAlign =
-                                excel.HAlignType.center;
-                            sheet.getRangeByName('X25:AH25').merge();
-                            sheet
-                                .getRangeByName("X25:AH25")
-                                .cellStyle
-                                .fontSize = 12;
-                            sheet.getRangeByName('X30:AH30').merge();
-                            sheet
-                                .getRangeByName("X30:AH30")
-                                .cellStyle
-                                .fontSize = 12;
-                            sheet.getRangeByName('X30:AH30').setText(
-                                '...............................................');
-                            sheet.getRangeByName("X30:AH30").cellStyle.hAlign =
-                                excel.HAlignType.center;
-
-                            if (parts.length == 2) {
-                              String monthEnglish = parts[0];
-                              String year = parts[1];
-
-                              // Konversi nama bulan dari bahasa Inggris ke bahasa Indonesia
-                              String month = monthNames[monthEnglish]!;
-
-                              // Konversi nama bulan ke index bulan
-                              DateTime tempDate =
-                                  DateFormat('MMMM', 'id_ID').parse(month);
-                              int monthIndex = tempDate.month;
-
-                              // Mengisi Data Absensi
-                              int row = 7;
-                              for (var user in users) {
-                                sheet
-                                    .getRangeByIndex(row, 1)
-                                    .setText((row - 6).toString());
-                                sheet
-                                    .getRangeByIndex(row, 2)
-                                    .setText(user['nama_lengkap']);
-                                sheet
-                                    .getRangeByIndex(row, 3)
-                                    .setText(user['jabatan']);
-
-                                final absensiUser = await supabase
-                                    .from('absensi')
-                                    .select()
-                                    .eq('id_user', user['id'])
-                                    .gte(
-                                        'created_at',
-                                        DateTime(int.parse(year), monthIndex, 1)
-                                            .toIso8601String())
-                                    .lte(
-                                        'created_at',
-                                        DateTime(int.parse(year),
-                                                monthIndex + 1, 0, 23, 59, 59)
-                                            .toIso8601String());
-
-                                for (var absensi in absensiUser) {
-                                  DateTime date =
-                                      DateTime.parse(absensi['created_at']);
-                                  int columnIndex = date.day + 3;
-                                  String columnName =
-                                      getExcelColumnName(columnIndex);
-                                  int tipeAbsen = absensi['tipe_absen'];
-
-                                  var cell =
-                                      sheet.getRangeByName("$columnName$row");
-
-                                  if (tipeAbsen == 1) {
-                                    cell.cellStyle.backColorRgb =
-                                        Color.fromARGB(255, 0, 255, 0); // Hijau
-                                  } else if (tipeAbsen == 2) {
-                                    cell.cellStyle.backColorRgb =
-                                        Color.fromARGB(
-                                            255, 255, 255, 0); // Kuning
-                                  } else {
-                                    cell.cellStyle.backColorRgb =
-                                        Color.fromARGB(255, 255, 0, 0); // Merah
-                                  }
+                              // Border
+                              for (int row = 5; row <= 22; row++) {
+                                for (int col = 1; col <= 35; col++) {
+                                  sheet
+                                      .getRangeByIndex(row, col)
+                                      .cellStyle
+                                      .borders
+                                      .all
+                                      .lineStyle = excel.LineStyle.thin;
                                 }
-                                row++;
                               }
+
+                              // Mengetahui Kepala Desa Gunungbatu
+                              sheet.getRangeByName('A24:C24').merge();
+                              sheet.getRangeByName("A24").cellStyle.fontSize =
+                                  12;
+                              sheet.getRangeByName('A24').setText('MENGETAHUI');
+                              sheet.getRangeByName("A24:C24").cellStyle.hAlign =
+                                  excel.HAlignType.center;
+                              sheet.getRangeByName('A25:C25').merge();
+                              sheet
+                                  .getRangeByName("A25:C25")
+                                  .cellStyle
+                                  .fontSize = 12;
+                              sheet
+                                  .getRangeByName('A25:C25')
+                                  .setText('KEPALA DESA GUNUNGBATU');
+                              sheet.getRangeByName("A25:C25").cellStyle.hAlign =
+                                  excel.HAlignType.center;
+                              sheet.getRangeByName('A25:C25').merge();
+                              sheet
+                                  .getRangeByName("A25:C25")
+                                  .cellStyle
+                                  .fontSize = 12;
+                              sheet.getRangeByName('A30:C30').merge();
+                              sheet
+                                  .getRangeByName("A30:C30")
+                                  .cellStyle
+                                  .fontSize = 12;
+                              sheet.getRangeByName('A30:C30').setText(
+                                  '...............................................');
+                              sheet.getRangeByName("A30:C30").cellStyle.hAlign =
+                                  excel.HAlignType.center;
+
+                              // Sekretaris Desa
+                              sheet.getRangeByName('X24:AH24').merge();
+                              sheet
+                                  .getRangeByName("X24:AH24")
+                                  .cellStyle
+                                  .fontSize = 12;
+                              String today = DateFormat('d MMMM yyyy', 'id_ID')
+                                  .format(DateTime.now())
+                                  .toUpperCase();
+                              sheet
+                                  .getRangeByName('X24:AH24')
+                                  .setText('GUNUNGBATU, $today');
+                              sheet
+                                  .getRangeByName("X24:AH24")
+                                  .cellStyle
+                                  .hAlign = excel.HAlignType.center;
+                              sheet.getRangeByName('X25:AH25').merge();
+                              sheet
+                                  .getRangeByName("X25:AH25")
+                                  .cellStyle
+                                  .fontSize = 12;
+                              sheet
+                                  .getRangeByName('X25:AH25')
+                                  .setText('SEKRETARIS DESA GUNUNGBATU');
+                              sheet
+                                  .getRangeByName("X25:AH25")
+                                  .cellStyle
+                                  .hAlign = excel.HAlignType.center;
+                              sheet.getRangeByName('X25:AH25').merge();
+                              sheet
+                                  .getRangeByName("X25:AH25")
+                                  .cellStyle
+                                  .fontSize = 12;
+                              sheet.getRangeByName('X30:AH30').merge();
+                              sheet
+                                  .getRangeByName("X30:AH30")
+                                  .cellStyle
+                                  .fontSize = 12;
+                              sheet.getRangeByName('X30:AH30').setText(
+                                  '...............................................');
+                              sheet
+                                  .getRangeByName("X30:AH30")
+                                  .cellStyle
+                                  .hAlign = excel.HAlignType.center;
+
+                              if (parts.length == 2) {
+                                String monthEnglish = parts[0];
+                                String year = parts[1];
+
+                                // Konversi nama bulan dari bahasa Inggris ke bahasa Indonesia
+                                String month = monthNames[monthEnglish]!;
+
+                                // Konversi nama bulan ke index bulan
+                                DateTime tempDate =
+                                    DateFormat('MMMM', 'id_ID').parse(month);
+                                int monthIndex = tempDate.month;
+
+                                // Mengisi Data Absensi
+                                int row = 7;
+                                for (var user in users) {
+                                  sheet
+                                      .getRangeByIndex(row, 1)
+                                      .setText((row - 6).toString());
+                                  sheet
+                                      .getRangeByIndex(row, 2)
+                                      .setText(user['nama_lengkap']);
+                                  sheet
+                                      .getRangeByIndex(row, 3)
+                                      .setText(user['jabatan']);
+
+                                  DateTime now = DateTime.now();
+                                  int selectedMonthIndex =
+                                      months.indexOf(selectedMonth!) + 1;
+                                  DateTime endDate =
+                                      selectedMonthIndex == now.month
+                                          ? now
+                                          : DateTime(
+                                              now.year,
+                                              selectedMonthIndex + 1,
+                                              0,
+                                              23,
+                                              59,
+                                              59);
+
+                                  for (int day = 1; day <= endDate.day; day++) {
+                                    DateTime date = DateTime(int.parse(year),
+                                        selectedMonthIndex, day);
+                                    String columnName =
+                                        getExcelColumnName(day + 3);
+
+                                    var cell =
+                                        sheet.getRangeByName("$columnName$row");
+
+                                    var absensiUser = await supabase
+                                        .from('absensi')
+                                        .select()
+                                        .eq('id_user', user['id'])
+                                        .gte('created_at',
+                                            date.toIso8601String())
+                                        .lte(
+                                            'created_at',
+                                            date
+                                                .add(Duration(days: 1))
+                                                .toIso8601String());
+
+                                    if (absensiUser.isEmpty) {
+                                      cell.cellStyle.backColorRgb =
+                                          Color.fromARGB(
+                                              255, 255, 0, 0); // Merah
+                                    } else {
+                                      for (var absensi in absensiUser) {
+                                        int tipeAbsen = absensi['tipe_absen'];
+                                        int statusAbsensi =
+                                            absensi['status_absensi'];
+
+                                        if (statusAbsensi == 1) {
+                                          cell.cellStyle.backColorRgb =
+                                              Color.fromARGB(
+                                                  255, 0, 255, 0); // Hijau
+                                        } else if (statusAbsensi == 0) {
+                                          cell.cellStyle.backColorRgb =
+                                              Color.fromARGB(
+                                                  255, 255, 255, 0); // Kuning
+                                        }
+                                      }
+                                    }
+                                  }
+                                  row++;
+                                }
+                              }
+
+                              // Auto-fit the columns
+                              for (int col = 1; col <= 34; col++) {
+                                sheet.autoFitColumn(col);
+                              }
+
+                              final List<int> bytes = workbook.saveAsStream();
+                              File('/storage/emulated/0/Download/rekap_absensi_$selectedMonth.xlsx')
+                                  .writeAsBytes(bytes);
+
+                              workbook.dispose();
+
+                              Navigator.pop(context);
+                              showToast(context,
+                                  "Rekap berhasil dibuat, silahkan cek di folder download");
+                            } catch (e) {
+                              Navigator.pop(context);
+                              showToast(context, e.toString());
                             }
-
-                            // Auto-fit the columns
-                            for (int col = 1; col <= 34; col++) {
-                              sheet.autoFitColumn(col);
-                            }
-
-                            final List<int> bytes = workbook.saveAsStream();
-                            File('/storage/emulated/0/Download/excel.xlsx')
-                                .writeAsBytes(bytes);
-
-                            workbook.dispose();
                           },
                           child: Text(
                             'Download Rekap',

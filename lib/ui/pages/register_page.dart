@@ -37,23 +37,6 @@ class _RegisterPageState extends State<RegisterPage> {
     'Kepala Dusun 4',
   ];
 
-  bool validateInputs() {
-    if (_namaController.text.trim().isEmpty) {
-      showToast(context, "Nama lengkap tidak boleh kosong");
-      return false;
-    }
-    if (_usernameController.text.trim().isEmpty) {
-      showToast(context, "Username tidak boleh kosong");
-      return false;
-    }
-    if (_passwordController.text.trim().isEmpty) {
-      showToast(context, "Password tidak boleh kosong");
-      return false;
-    }
-
-    return true;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -148,11 +131,10 @@ class _RegisterPageState extends State<RegisterPage> {
                     horizontalPadding: 0,
                   ),
                   gapH8,
-                  NewForm(
+                  PasswordForm(
                     controller: _passwordController,
                     nama: "Password",
                     hintText: "Masukkan Password",
-                    obscureText: true,
                     horizontalPadding: 0,
                   ),
                   gapH32,
@@ -162,13 +144,18 @@ class _RegisterPageState extends State<RegisterPage> {
                     startColor: kPrimary2Color,
                     endColor: kPrimaryColor,
                     onPressed: () async {
-                      await createUser(
-                        context,
-                        _namaController.text.trim(),
-                        dropdownvalue,
-                        _usernameController.text.trim(),
-                        _passwordController.text.trim(),
-                      );
+                      if (_passwordController.text.trim().length >= 8) {
+                        await createUser(
+                          context,
+                          _namaController.text.trim(),
+                          dropdownvalue,
+                          _usernameController.text.trim(),
+                          _passwordController.text.trim(),
+                        );
+                      } else {
+                        showToast(
+                            context, "Password minimal berpanjang 8 karakter");
+                      }
                     },
                   ),
                   gapH(8),
