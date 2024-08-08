@@ -33,8 +33,13 @@ class HistoryCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    tipeAbsensi == 0 ? 'Absensi Berangkat' : 'Absensi Pulang',
-                    style: blackTextStyle.copyWith(fontSize: 14),
+                    tipeAbsensi == 0
+                        ? 'Hadir'
+                        : tipeAbsensi == 1
+                            ? 'Ijin'
+                            : "Terlambat",
+                    style:
+                        blackTextStyle.copyWith(fontSize: 16, fontWeight: bold),
                   ),
                   Row(
                     children: [
@@ -67,14 +72,22 @@ class HistoryCard extends StatelessWidget {
             width:
                 MediaQuery.of(context).size.width * 0.15, // Ensures 1/5 width
             decoration: BoxDecoration(
-                color: tipeAbsensi == 0 ? kGreenColor : kPrimaryLightColor,
+                color: tipeAbsensi == 0
+                    ? kGreenColor
+                    : tipeAbsensi == 1
+                        ? kYellowColor
+                        : kOrangeColor,
                 borderRadius: const BorderRadius.only(
                   topRight: Radius.circular(8), // Adjust as needed
                   bottomRight: Radius.circular(8), // Adjust as needed
                 )),
             alignment: Alignment.center,
             child: Text(
-              tipeAbsensi == 0 ? "B" : "P",
+              tipeAbsensi == 0
+                  ? 'H'
+                  : tipeAbsensi == 1
+                      ? 'I'
+                      : "T",
               style:
                   whiteTextStyle.copyWith(fontSize: 28, fontWeight: extraBold),
             ),

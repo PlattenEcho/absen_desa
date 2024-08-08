@@ -10,6 +10,7 @@ import 'package:absen_desa/ui/widgets/toast.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:syncfusion_flutter_xlsio/xlsio.dart' as excel;
 
 class HistoryPage extends StatefulWidget {
@@ -179,6 +180,8 @@ class _HistoryPageState extends State<HistoryPage> {
                         const SizedBox(width: 16),
                         ElevatedButton(
                           onPressed: () async {
+                            await Permission.manageExternalStorage.request();
+
                             showDialog(
                               context: context,
                               barrierDismissible: false,
@@ -487,14 +490,15 @@ class _HistoryPageState extends State<HistoryPage> {
                                         int statusAbsensi =
                                             absensi['status_absensi'];
 
-                                        if (statusAbsensi == 1) {
+                                        if (tipeAbsen == 0) {
                                           cell.cellStyle.backColorRgb =
-                                              Color.fromARGB(
-                                                  255, 0, 255, 0); // Hijau
-                                        } else if (statusAbsensi == 0) {
+                                              Color.fromARGB(255, 0, 255, 0);
+                                        } else if (tipeAbsen == 1) {
                                           cell.cellStyle.backColorRgb =
-                                              Color.fromARGB(
-                                                  255, 255, 255, 0); // Kuning
+                                              Color.fromARGB(255, 255, 255, 0);
+                                        } else if (tipeAbsen == 2) {
+                                          cell.cellStyle.backColorRgb =
+                                              Color.fromARGB(255, 255, 165, 0);
                                         }
                                       }
                                     }
@@ -508,17 +512,25 @@ class _HistoryPageState extends State<HistoryPage> {
                                 sheet.autoFitColumn(col);
                               }
 
+                              final directory = Directory(
+                                  '/storage/emulated/0/AbsenDesa_Gunungbatu');
+                              if (!directory.existsSync()) {
+                                directory.createSync(recursive: true);
+                              }
+
+                              final filePath =
+                                  '${directory.path}/rekap_absensi_$selectedMonth.xlsx';
                               final List<int> bytes = workbook.saveAsStream();
-                              File('/storage/emulated/0/Download/rekap_absensi_$selectedMonth.xlsx')
-                                  .writeAsBytes(bytes);
+                              File(filePath).writeAsBytes(bytes);
 
                               workbook.dispose();
 
                               Navigator.pop(context);
                               showToast(context,
-                                  "Rekap berhasil dibuat, silahkan cek di folder download");
+                                  "Rekap berhasil dibuat, silahkan cek di folder AbsenDesa_Gunungbatu");
                             } catch (e) {
                               Navigator.pop(context);
+                              print(e.toString());
                               showToast(context, e.toString());
                             }
                           },

@@ -158,7 +158,7 @@ class _AbsensiPageState extends State<AbsensiPage>
                                   });
                                 },
                               ),
-                              Text('Pulang',
+                              Text('Izin',
                                   style: blackTextStyle.copyWith(
                                       fontSize: 16, fontWeight: bold)),
                             ],
@@ -211,8 +211,10 @@ class _AbsensiPageState extends State<AbsensiPage>
                                 .toIso8601String();
                             final startTime =
                                 DateTime(now.year, now.month, now.day, 8);
+                            final lateTime =
+                                DateTime(now.year, now.month, now.day);
                             final endTime =
-                                DateTime(now.year, now.month, now.day, 14);
+                                DateTime(now.year, now.month, now.day, 23, 59);
 
                             if (!(now.isAfter(startTime) &&
                                 now.isBefore(endTime))) {
@@ -220,24 +222,51 @@ class _AbsensiPageState extends State<AbsensiPage>
                               showToast(context, "Belum memasuki jam kerja");
                             } else {
                               try {
-                                final berangkatResponse = await supabase
+                                final todayResponse = await supabase
                                     .from('absensi')
                                     .select('id')
                                     .eq('username', user!.username)
                                     .gte('created_at', todayStart)
                                     .lte('created_at', todayEnd)
-                                    .eq('tipe_absen', 0)
                                     .limit(1);
 
                                 if (tipeAbsensi == 0) {
-                                  if (berangkatResponse.isEmpty) {
+                                  if (todayResponse.isEmpty) {
                                     await supabase.from('absensi').insert({
                                       'id_user': user!.id,
                                       'username': user!.username,
                                       'status_absensi': isInOffice ? 1 : 0,
                                       'latitude': userLat,
                                       'longitude': userLong,
-                                      'tipe_absen': 0,
+                                      'tipe_absen':
+                                          !now.isAfter(lateTime) ? 0 : 2,
+                                      'keterangan':
+                                          keteranganController.text.trim(),
+                                      'created_at': today
+                                    });
+                                    Navigator.pop(context);
+                                    if (!now.isAfter(lateTime)) {
+                                      showToast(context, "Absen berhasil.");
+                                    } else {
+                                      showToast(context,
+                                          "Absen berhasil. Anda tercatat sebagai terlambat karena melebihi jam 08:00.");
+                                    }
+                                  } else {
+                                    Navigator.pop(context);
+                                    showToast(context,
+                                        "Anda sudah melakukan absen hadir hari ini");
+                                  }
+                                }
+
+                                if (tipeAbsensi == 1) {
+                                  if (todayResponse.isEmpty) {
+                                    await supabase.from('absensi').insert({
+                                      'id_user': user!.id,
+                                      'username': user!.username,
+                                      'status_absensi': isInOffice ? 1 : 0,
+                                      'latitude': userLat,
+                                      'longitude': userLong,
+                                      'tipe_absen': 1,
                                       'keterangan':
                                           keteranganController.text.trim(),
                                       'created_at': today
@@ -247,43 +276,7 @@ class _AbsensiPageState extends State<AbsensiPage>
                                   } else {
                                     Navigator.pop(context);
                                     showToast(context,
-                                        "Anda sudah melakukan absen berangkat hari ini");
-                                  }
-                                }
-
-                                if (tipeAbsensi == 1) {
-                                  final pulangResponse = await supabase
-                                      .from('absensi')
-                                      .select('id')
-                                      .eq('username', user!.username)
-                                      .gte('created_at', todayStart)
-                                      .lte('created_at', todayEnd)
-                                      .eq('tipe_absen', 1)
-                                      .limit(1);
-                                  if (berangkatResponse.isNotEmpty) {
-                                    if (pulangResponse.isEmpty) {
-                                      await supabase.from('absensi').insert({
-                                        'id_user': user!.id,
-                                        'username': user!.username,
-                                        'status_absensi': isInOffice ? 1 : 0,
-                                        'latitude': userLat,
-                                        'longitude': userLong,
-                                        'tipe_absen': 1,
-                                        'keterangan':
-                                            keteranganController.text.trim(),
-                                        'created_at': today
-                                      });
-                                      Navigator.pop(context);
-                                      showToast(context, "Absen berhasil.");
-                                    } else {
-                                      Navigator.pop(context);
-                                      showToast(context,
-                                          "Anda sudah melakukan absen pulang hari ini");
-                                    }
-                                  } else {
-                                    Navigator.pop(context);
-                                    showToast(context,
-                                        "Anda belum melakukan absen berangkat hari ini");
+                                        "Anda sudah melakukan absen izin hari ini");
                                   }
                                 }
                               } catch (e) {

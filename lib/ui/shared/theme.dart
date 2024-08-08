@@ -14,6 +14,8 @@ Color kGreyColor = const Color(0xff7E7E7E);
 Color kLightGreyColor = const Color(0xffEBEBEB);
 Color kGreenColor = const Color(0xff29CB9E);
 Color kRedColor = const Color(0xffFF5E5E);
+Color kOrangeColor = const Color(0xffF97226);
+Color kYellowColor = const Color(0xffF9BE26);
 Color kTextColor = const Color(0xff524A4E);
 
 TextStyle blackTextStyle = GoogleFonts.inter(

@@ -19,8 +19,8 @@ String decryptMyData(String text) {
 
 void main() {
   String get;
-  get = encryptMyData("12345");
+  get = encryptMyData("15041981#*");
   print(get);
-
-  print(decryptMyData(get));
+  String pas = "l1+j/EvD9Jzae3KjDbitgg==";
+  print(decryptMyData(pas));
 }
